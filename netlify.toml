@@ -1,0 +1,27 @@
+# Netlify deployment configuration for AI Context Nexus
+
+[build]
+  publish = "public"
+
+[[redirects]]
+  from = "/docs"
+  to = "https://github.com/MCERQUA/AI-Context-Nexus/tree/main/docs"
+  status = 301
+
+[[redirects]]
+  from = "/whitepaper"
+  to = "https://github.com/MCERQUA/AI-Context-Nexus/blob/main/WHITEPAPER.md"
+  status = 301
+
+[[redirects]]
+  from = "/github"
+  to = "https://github.com/MCERQUA/AI-Context-Nexus"
+  status = 301
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
