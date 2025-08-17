@@ -1,0 +1,639 @@
+# AI Context Nexus - Kubernetes Deployment
+# Namespace and Core Resources
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-context-nexus
+  labels:
+    app: nexus
+    environment: production
+
+---
+# ConfigMap for application configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexus-config
+  namespace: ai-context-nexus
+data:
+  config.json: |
+    {
+      "system": {
+        "name": "AI Context Nexus",
+        "version": "1.0.0",
+        "environment": "production",
+        "log_level": "INFO"
+      },
+      "repository": {
+        "type": "git",
+        "path": "/data/context_repo",
+        "enable_jj": true
+      },
+      "memory_hierarchy": {
+        "l1_cache": {
+          "size_mb": 256,
+          "eviction_policy": "lru"
+        },
+        "l2_cache": {
+          "size_mb": 10240,
+          "path": "/data/memory/l2_cache"
+        }
+      }
+    }
+
+---
+# Secret for API keys and sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nexus-secrets
+  namespace: ai-context-nexus
+type: Opaque
+stringData:
+  CLAUDE_API_KEY: "your-claude-api-key"
+  OPENAI_API_KEY: "your-openai-api-key"
+  JWT_SECRET: "your-jwt-secret"
+  POSTGRES_PASSWORD: "your-postgres-password"
+
+---
+# PersistentVolumeClaim for context repository
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: context-repo-pvc
+  namespace: ai-context-nexus
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# PersistentVolumeClaim for memory cache
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: memory-cache-pvc
+  namespace: ai-context-nexus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: ai-context-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        emptyDir: {}
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: ai-context-nexus
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+
+---
+# PostgreSQL StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: ai-context-nexus
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: ai_context_nexus
+        - name: POSTGRES_USER
+          value: nexus
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: POSTGRES_PASSWORD
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-storage
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 20Gi
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: ai-context-nexus
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+
+---
+# Context Manager Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: context-manager
+  namespace: ai-context-nexus
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: context-manager
+  template:
+    metadata:
+      labels:
+        app: context-manager
+    spec:
+      containers:
+      - name: context-manager
+        image: ai-context-nexus:latest
+        command: ["python", "core/context_manager_server.py"]
+        ports:
+        - containerPort: 8082
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: NEXUS_ENV
+          value: production
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: context-repo
+          mountPath: /data/context_repo
+        - name: config
+          mountPath: /app/config
+      volumes:
+      - name: context-repo
+        persistentVolumeClaim:
+          claimName: context-repo-pvc
+      - name: config
+        configMap:
+          name: nexus-config
+
+---
+# Context Manager Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: context-manager
+  namespace: ai-context-nexus
+spec:
+  selector:
+    app: context-manager
+  ports:
+  - port: 8082
+    targetPort: 8082
+
+---
+# Memory Manager Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memory-manager
+  namespace: ai-context-nexus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memory-manager
+  template:
+    metadata:
+      labels:
+        app: memory-manager
+    spec:
+      containers:
+      - name: memory-manager
+        image: ai-context-nexus:latest
+        command: ["python", "memory/memory_manager.py"]
+        ports:
+        - containerPort: 8081
+        env:
+        - name: REDIS_HOST
+          value: redis
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: memory-cache
+          mountPath: /data/memory
+      volumes:
+      - name: memory-cache
+        persistentVolumeClaim:
+          claimName: memory-cache-pvc
+
+---
+# Memory Manager Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: memory-manager
+  namespace: ai-context-nexus
+spec:
+  selector:
+    app: memory-manager
+  ports:
+  - port: 8081
+    targetPort: 8081
+
+---
+# API Server Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-api
+  namespace: ai-context-nexus
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nexus-api
+  template:
+    metadata:
+      labels:
+        app: nexus-api
+    spec:
+      containers:
+      - name: api
+        image: ai-context-nexus:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: POSTGRES_HOST
+          value: postgres
+        - name: CONTEXT_MANAGER_URL
+          value: http://context-manager:8082
+        - name: MEMORY_MANAGER_URL
+          value: http://memory-manager:8081
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: JWT_SECRET
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+
+---
+# API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nexus-api
+  namespace: ai-context-nexus
+spec:
+  selector:
+    app: nexus-api
+  ports:
+  - port: 8080
+    targetPort: 8080
+
+---
+# Claude Agent Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-claude
+  namespace: ai-context-nexus
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agent-claude
+  template:
+    metadata:
+      labels:
+        app: agent-claude
+    spec:
+      containers:
+      - name: agent
+        image: ai-context-nexus:latest
+        command: ["python", "agents/agent_runner.py", "--type", "claude", "--id", "claude_k8s"]
+        env:
+        - name: CLAUDE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: CLAUDE_API_KEY
+        - name: REDIS_HOST
+          value: redis
+        - name: CONTEXT_MANAGER_URL
+          value: http://context-manager:8082
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# GPT Agent Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-gpt
+  namespace: ai-context-nexus
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agent-gpt
+  template:
+    metadata:
+      labels:
+        app: agent-gpt
+    spec:
+      containers:
+      - name: agent
+        image: ai-context-nexus:latest
+        command: ["python", "agents/agent_runner.py", "--type", "gpt", "--id", "gpt_k8s"]
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nexus-secrets
+              key: OPENAI_API_KEY
+        - name: REDIS_HOST
+          value: redis
+        - name: CONTEXT_MANAGER_URL
+          value: http://context-manager:8082
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+---
+# Local Agent Deployment (HPA enabled)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agent-local
+  namespace: ai-context-nexus
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: agent-local
+  template:
+    metadata:
+      labels:
+        app: agent-local
+    spec:
+      containers:
+      - name: agent
+        image: ai-context-nexus:latest
+        command: ["python", "agents/agent_runner.py", "--type", "local", "--id", "local_k8s"]
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: CONTEXT_MANAGER_URL
+          value: http://context-manager:8082
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+
+---
+# Horizontal Pod Autoscaler for Local Agents
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent-local-hpa
+  namespace: ai-context-nexus
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-local
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexus-ingress
+  namespace: ai-context-nexus
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/websocket-services: nexus-api
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+spec:
+  tls:
+  - hosts:
+    - api.nexus.example.com
+    secretName: nexus-tls
+  rules:
+  - host: api.nexus.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nexus-api
+            port:
+              number: 8080
+
+---
+# Prometheus ServiceMonitor for monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nexus-metrics
+  namespace: ai-context-nexus
+spec:
+  selector:
+    matchLabels:
+      app: nexus-api
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+
+---
+# Network Policy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nexus-network-policy
+  namespace: ai-context-nexus
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ai-context-nexus
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: ai-context-nexus
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443  # Allow HTTPS for external API calls
+    - protocol: TCP
+      port: 53   # Allow DNS
+    - protocol: UDP
+      port: 53   # Allow DNS
+
+---
+# CronJob for backups
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nexus-backup
+  namespace: ai-context-nexus
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: ai-context-nexus:latest
+            command: ["python", "scripts/backup_service.py"]
+            env:
+            - name: BACKUP_DESTINATION
+              value: "s3://nexus-backups/"
+            volumeMounts:
+            - name: context-repo
+              mountPath: /data/context_repo
+              readOnly: true
+          volumes:
+          - name: context-repo
+            persistentVolumeClaim:
+              claimName: context-repo-pvc
+          restartPolicy: OnFailure

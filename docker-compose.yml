@@ -1,0 +1,302 @@
+version: '3.8'
+
+services:
+  # Core Services
+  nexus-api:
+    build:
+      context: .
+      target: production
+    container_name: nexus-api
+    ports:
+      - "8080:8080"
+    environment:
+      - NEXUS_ENV=production
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=nexus
+      - POSTGRES_PASSWORD=nexus_password
+      - POSTGRES_DB=ai_context_nexus
+      - JWT_SECRET=${JWT_SECRET:-change_me_in_production}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - context-repo:/app/context_repo
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - nexus-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nexus-memory:
+    build:
+      context: .
+      target: production
+    container_name: nexus-memory
+    command: ["python", "memory/memory_manager.py"]
+    ports:
+      - "8081:8081"
+    environment:
+      - NEXUS_ENV=production
+      - REDIS_HOST=redis
+    volumes:
+      - ./memory/l2_cache:/app/memory/l2_cache
+      - memory-data:/app/data/memory
+    depends_on:
+      - redis
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  nexus-context-manager:
+    build:
+      context: .
+      target: production
+    container_name: nexus-context-manager
+    command: ["python", "core/context_manager_server.py"]
+    ports:
+      - "8082:8082"
+    environment:
+      - NEXUS_ENV=production
+      - REDIS_HOST=redis
+    volumes:
+      - context-repo:/app/context_repo
+    depends_on:
+      - redis
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # Agent Workers
+  nexus-agent-claude:
+    build:
+      context: .
+      target: production
+    container_name: nexus-agent-claude
+    command: ["python", "agents/agent_runner.py", "--type", "claude", "--id", "claude_primary"]
+    environment:
+      - NEXUS_ENV=production
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY}
+      - REDIS_HOST=redis
+      - CONTEXT_MANAGER_URL=http://nexus-context-manager:8082
+    depends_on:
+      - redis
+      - nexus-context-manager
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  nexus-agent-gpt:
+    build:
+      context: .
+      target: production
+    container_name: nexus-agent-gpt
+    command: ["python", "agents/agent_runner.py", "--type", "gpt", "--id", "gpt_primary"]
+    environment:
+      - NEXUS_ENV=production
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_HOST=redis
+      - CONTEXT_MANAGER_URL=http://nexus-context-manager:8082
+    depends_on:
+      - redis
+      - nexus-context-manager
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  nexus-agent-local:
+    build:
+      context: .
+      target: production
+    container_name: nexus-agent-local
+    command: ["python", "agents/agent_runner.py", "--type", "local", "--id", "local_processor"]
+    environment:
+      - NEXUS_ENV=production
+      - REDIS_HOST=redis
+      - CONTEXT_MANAGER_URL=http://nexus-context-manager:8082
+    depends_on:
+      - redis
+      - nexus-context-manager
+    networks:
+      - nexus-network
+    restart: unless-stopped
+    deploy:
+      replicas: 3  # Run multiple local agents
+
+  # Infrastructure Services
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - nexus-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=nexus
+      - POSTGRES_PASSWORD=nexus_password
+      - POSTGRES_DB=ai_context_nexus
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nexus-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nexus-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nexus-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # Web UI
+  nexus-web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: nexus-web
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8080
+      - REACT_APP_WS_URL=ws://localhost:8080/ws
+    depends_on:
+      - nexus-api
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # Documentation
+  nexus-docs:
+    image: squidfunk/mkdocs-material:latest
+    container_name: nexus-docs
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docs:/docs
+      - ./mkdocs.yml:/docs/mkdocs.yml
+    command: serve --dev-addr=0.0.0.0:8000
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # Development Tools (optional)
+  jupyter:
+    build:
+      context: .
+      target: development
+    container_name: nexus-jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+      - context-repo:/app/context_repo
+    command: jupyter lab --ip=0.0.0.0 --allow-root --no-browser
+    networks:
+      - nexus-network
+    profiles:
+      - development
+
+  # Backup Service
+  nexus-backup:
+    build:
+      context: .
+      target: production
+    container_name: nexus-backup
+    volumes:
+      - context-repo:/app/context_repo:ro
+      - ./backups:/app/backups
+      - postgres-data:/var/lib/postgresql/data:ro
+      - redis-data:/data/redis:ro
+    command: ["python", "scripts/backup_service.py"]
+    environment:
+      - BACKUP_INTERVAL=3600  # Hourly backups
+      - RETENTION_DAYS=7
+    networks:
+      - nexus-network
+    restart: unless-stopped
+    profiles:
+      - backup
+
+networks:
+  nexus-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  context-repo:
+    driver: local
+  memory-data:
+    driver: local
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+# To run specific profiles:
+# docker-compose up                    # Run production services
+# docker-compose --profile development up  # Include development tools
+# docker-compose --profile backup up       # Include backup service
+# docker-compose --profile all up          # Run everything

@@ -1,0 +1,200 @@
+{
+  "system": {
+    "name": "AI Context Nexus",
+    "version": "1.0.0",
+    "environment": "production",
+    "debug": false,
+    "log_level": "INFO",
+    "data_dir": "./data",
+    "backup_dir": "./backups",
+    "max_workers": 10
+  },
+  
+  "repository": {
+    "type": "git",
+    "path": "./context_repo",
+    "enable_jj": true,
+    "auto_commit": true,
+    "commit_interval": 300,
+    "max_commit_size_mb": 100,
+    "compression": "zstd",
+    "pack_refs": true,
+    "gc_interval": 86400
+  },
+  
+  "memory_hierarchy": {
+    "l1_cache": {
+      "enabled": true,
+      "size_mb": 256,
+      "eviction_policy": "lru",
+      "ttl_seconds": 3600,
+      "max_entries": 10000
+    },
+    "l2_cache": {
+      "enabled": true,
+      "size_mb": 10240,
+      "path": "./memory/l2_cache",
+      "index_type": "btree",
+      "compression": "lz4",
+      "shards": 16
+    },
+    "l3_storage": {
+      "type": "git",
+      "enable_packfiles": true,
+      "delta_compression": true,
+      "window_size": 10
+    }
+  },
+  
+  "agents": {
+    "max_concurrent": 50,
+    "heartbeat_interval": 30,
+    "timeout_seconds": 60,
+    "retry_attempts": 3,
+    "retry_backoff": "exponential",
+    "rate_limits": {
+      "claude": {
+        "requests_per_minute": 60,
+        "tokens_per_minute": 100000
+      },
+      "gpt": {
+        "requests_per_minute": 60,
+        "tokens_per_minute": 150000
+      },
+      "local": {
+        "requests_per_minute": 1000,
+        "tokens_per_minute": null
+      }
+    },
+    "load_balancing": {
+      "strategy": "weighted_round_robin",
+      "health_check_interval": 60,
+      "circuit_breaker": {
+        "enabled": true,
+        "failure_threshold": 5,
+        "recovery_timeout": 300
+      }
+    }
+  },
+  
+  "semantic_index": {
+    "enabled": true,
+    "dimension": 768,
+    "index_type": "faiss",
+    "metric": "cosine",
+    "nlist": 100,
+    "nprobe": 10,
+    "cache_size": 1000000,
+    "rebuild_interval": 3600
+  },
+  
+  "networking": {
+    "distributed_mode": false,
+    "listen_host": "0.0.0.0",
+    "listen_port": 8080,
+    "grpc_port": 50051,
+    "redis": {
+      "enabled": false,
+      "host": "localhost",
+      "port": 6379,
+      "db": 0,
+      "password": null,
+      "use_ssl": false
+    },
+    "cluster": {
+      "enabled": false,
+      "node_id": "node-1",
+      "seeds": ["node-2:8080", "node-3:8080"],
+      "gossip_interval": 1000,
+      "sync_interval": 5000
+    }
+  },
+  
+  "security": {
+    "encryption": {
+      "enabled": true,
+      "algorithm": "aes-256-gcm",
+      "key_rotation_days": 30
+    },
+    "authentication": {
+      "enabled": false,
+      "type": "jwt",
+      "secret": "${JWT_SECRET}",
+      "expiry_hours": 24
+    },
+    "tls": {
+      "enabled": false,
+      "cert_file": "./certs/server.crt",
+      "key_file": "./certs/server.key",
+      "ca_file": "./certs/ca.crt"
+    },
+    "audit": {
+      "enabled": true,
+      "log_file": "./logs/audit.log",
+      "include_content": false,
+      "retention_days": 90
+    }
+  },
+  
+  "monitoring": {
+    "metrics": {
+      "enabled": true,
+      "prometheus": {
+        "enabled": true,
+        "port": 9090,
+        "path": "/metrics"
+      },
+      "statsd": {
+        "enabled": false,
+        "host": "localhost",
+        "port": 8125
+      }
+    },
+    "health_check": {
+      "enabled": true,
+      "path": "/health",
+      "interval": 30,
+      "timeout": 10
+    },
+    "tracing": {
+      "enabled": false,
+      "jaeger": {
+        "agent_host": "localhost",
+        "agent_port": 6831,
+        "sampler_type": "probabilistic",
+        "sampler_param": 0.1
+      }
+    }
+  },
+  
+  "recovery": {
+    "auto_recovery": true,
+    "checkpoint_interval": 300,
+    "max_recovery_attempts": 5,
+    "recovery_timeout": 600,
+    "backup": {
+      "enabled": true,
+      "interval": 3600,
+      "retention_count": 10,
+      "compress": true
+    }
+  },
+  
+  "performance": {
+    "batch_size": 100,
+    "prefetch_count": 10,
+    "async_io": true,
+    "worker_threads": 4,
+    "memory_limit_mb": 4096,
+    "cpu_limit_percent": 80,
+    "gc_threshold_mb": 1024
+  },
+  
+  "experimental": {
+    "neuromorphic_processing": false,
+    "quantum_resistant_crypto": false,
+    "federated_learning": false,
+    "blockchain_ledger": false,
+    "homomorphic_encryption": false
+  }
+}
