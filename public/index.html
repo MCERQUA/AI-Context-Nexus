@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Enhanced Title -->
+    <title>AI Context Nexus - Revolutionary Distributed Memory System for AI Agents</title>
+    
+    <!-- Meta Description -->
+    <meta name="description" content="Transform version control into intelligent memory systems. Git-as-Memory architecture enables persistent context, knowledge sharing, and semantic search for multi-agent AI collaboration.">
+    
+    <!-- Keywords -->
+    <meta name="keywords" content="AI memory system, distributed AI, Git-as-Memory, semantic knowledge graph, multi-agent systems, context management, AI collaboration, persistent memory, LLM memory, agent orchestration">
+    
+    <!-- Author & Robot Instructions -->
+    <meta name="author" content="Mike Cerqua">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="AI Context Nexus - Distributed Memory for AI Agents">
+    <meta property="og:description" content="Revolutionary Git-as-Memory system enabling persistent context and knowledge sharing between AI agents. Three-tier memory hierarchy with semantic search.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://github.com/MCERQUA/AI-Context-Nexus">
+    <meta property="og:site_name" content="AI Context Nexus">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AI Context Nexus - Revolutionary AI Memory System">
+    <meta name="twitter:description" content="Git-as-Memory architecture for persistent AI context. Semantic knowledge graphs, three-tier caching, universal agent protocol.">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://github.com/MCERQUA/AI-Context-Nexus">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "AI Context Nexus",
+        "description": "Distributed memory and context management system for AI agents using Git-as-Memory architecture",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Cross-platform",
+        "programmingLanguage": "Python",
+        "author": {
+            "@type": "Person",
+            "name": "Mike Cerqua"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/MCERQUA/AI-Context-Nexus",
+        "keywords": ["AI", "Machine Learning", "Memory Systems", "Knowledge Graph", "Multi-Agent", "Git", "Distributed Systems"],
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock"
+        }
+    }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: linear-gradient(135deg, #1a1f3a 0%, #2d3561 50%, #4a5899 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .hero-section {
+            background: 
+                linear-gradient(135deg, rgba(248, 250, 252, 0.96) 0%, rgba(255, 255, 255, 0.92) 100%),
+                linear-gradient(135deg, #1a1f3a 0%, #2d3561 50%, #4a5899 100%);
+            padding: 6rem 0 4rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+            z-index: 1;
+        }
+
+        .neural-network-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.03;
+            background-image: 
+                repeating-linear-gradient(90deg, #6366f1 0px, transparent 1px, transparent 100px, #6366f1 101px),
+                repeating-linear-gradient(0deg, #6366f1 0px, transparent 1px, transparent 100px, #6366f1 101px);
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        h1 {
+            font-size: clamp(3rem, 6vw, 5.5rem);
+            font-weight: 900;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+
+        .hero-highlight {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            color: #64748b;
+            font-weight: 400;
+            margin-bottom: 3rem;
+            line-height: 1.4;
+        }
+        
+        .hero-badges {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .hero-tag {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transform: rotate(8deg);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            z-index: 10;
+            animation: tagFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes tagFloat {
+            0%, 100% { transform: rotate(8deg) translateY(0px); }
+            50% { transform: rotate(8deg) translateY(-3px); }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1e293b;
+            border-color: #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #6366f1;
+            transform: translateY(-1px);
+        }
+        
+        .links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .link {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .link:hover::before {
+            left: 100%;
+        }
+        
+        .link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+        
+        .content-section {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin: 2rem 0;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .architecture-diagram {
+            background: linear-gradient(135deg, #f8fafc, #ffffff);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            white-space: pre;
+            color: #475569;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature h3 {
+            margin-bottom: 1rem;
+            color: #1e293b;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .feature p {
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        .performance-table th,
+        .performance-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .performance-table th {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .performance-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .code-example {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        .code-example pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            background: rgba(30, 41, 59, 0.95);
+            color: #e2e8f0;
+            padding: 3rem 0;
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        .footer a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #a855f7;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            .subtitle {
+                font-size: 1.2rem;
+            }
+            .hero-tag {
+                display: none;
+            }
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <div class="neural-network-bg"></div>
+        <div class="hero-tag">🚀 Alpha Release</div>
+        <div class="container">
+            <div class="hero-content">
+                <h1>AI Context <span class="hero-highlight">Nexus</span></h1>
+                <p class="subtitle">Transform version control into intelligent memory systems for AI agents</p>
+                
+                <div class="hero-badges">
+                    <span class="badge">Git-as-Memory</span>
+                    <span class="badge">3-Tier Cache</span>
+                    <span class="badge">Semantic Graph</span>
+                    <span class="badge">Multi-Agent</span>
+                </div>
+
+                <div class="hero-buttons">
+                    <a href="https://github.com/MCERQUA/AI-Context-Nexus" class="btn btn-primary">
+                        🚀 View on GitHub
+                    </a>
+                    <a href="#quick-start" class="btn btn-secondary">
+                        📖 Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content-section">
+            <h2 class="section-title">Revolutionary Memory Architecture</h2>
+            
+            <div class="architecture-diagram">┌─────────────────────────────────────────────────────────────┐
+│                    AI Context Nexus                         │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                │
+│  │ Claude   │  │  GPT-4   │  │  Llama   │   ...          │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘                │
+│       │             │             │                        │
+│  ┌────▼─────────────▼─────────────▼──────────────┐        │
+│  │         Context Synchronization Layer          │        │
+│  └──────────────────┬─────────────────────────────┘        │
+│                     │                                      │
+│  ┌──────────────────▼─────────────────────────────┐        │
+│  │           Three-Tier Memory Hierarchy          │        │
+│  │  ┌─────┐  ┌─────┐  ┌──────────┐              │        │
+│  │  │ L1  │→ │ L2  │→ │    L3    │              │        │
+│  │  │<1ms │  │<10ms│  │  <100ms  │              │        │
+│  │  └─────┘  └─────┘  └──────────┘              │        │
+│  └──────────────────┬─────────────────────────────┘        │
+│                     │                                      │
+│  ┌──────────────────▼─────────────────────────────┐        │
+│  │      Git Repository + Semantic Index           │        │
+│  └─────────────────────────────────────────────────┘        │
+└─────────────────────────────────────────────────────────────┘</div>
+
+            <div class="features">
+                <div class="feature">
+                    <div class="feature-icon">🧠</div>
+                    <h3>Git-as-Memory (GaM)</h3>
+                    <p>Every context becomes a git commit with full semantic metadata. Version history becomes searchable memory, enabling time-travel through AI reasoning.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Three-Tier Performance</h3>
+                    <p>L1 RAM cache (< 1ms), L2 compressed JSON (< 10ms), L3 git storage (< 100ms). Intelligent promotion and eviction for optimal performance.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🔗</div>
+                    <h3>Semantic Knowledge Graph</h3>
+                    <p>NetworkX-powered graph connects contexts by meaning. Discover relationships, cluster topics, and navigate knowledge through semantic similarity.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🤝</div>
+                    <h3>Universal Agent Protocol</h3>
+                    <p>Any LLM can participate - Claude, GPT, Llama, or custom models. Standardized interface ensures seamless collaboration and knowledge sharing.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Semantic Search</h3>
+                    <p>Find relevant contexts using natural language. FAISS-ready architecture for production-scale vector similarity search.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Enterprise Security</h3>
+                    <p>AES-256-GCM encryption, JWT authentication, audit logging, and role-based access control for production deployments.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">Performance Benchmarks</h2>
+            
+            <table class="performance-table">
+                <thead>
+                    <tr>
+                        <th>Operation</th>
+                        <th>L1 Cache</th>
+                        <th>L2 Cache</th>
+                        <th>L3 Storage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Read</strong></td>
+                        <td>< 1ms</td>
+                        <td>< 10ms</td>
+                        <td>< 100ms</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Write</strong></td>
+                        <td>< 5ms</td>
+                        <td>< 20ms</td>
+                        <td>< 200ms</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Search</strong></td>
+                        <td>< 10ms</td>
+                        <td>< 50ms</td>
+                        <td>< 500ms</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Graph Query</strong></td>
+                        <td>-</td>
+                        <td>< 100ms</td>
+                        <td>< 1000ms</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="content-section" id="quick-start">
+            <h2 class="section-title">Quick Start</h2>
+            
+            <div class="code-example">
+                <pre># Install AI Context Nexus
+git clone https://github.com/MCERQUA/AI-Context-Nexus
+cd ai-context-nexus
+./quickstart.sh
+
+# Create your first context
+from ai_context_nexus import ContextNexus
+
+nexus = ContextNexus()
+
+# Store context
+context_id = nexus.create_context(
+    content="Analysis of codebase architecture",
+    context_type="technical",
+    tags=["architecture", "analysis"]
+)
+
+# Semantic search
+results = nexus.search("architecture patterns", limit=10)
+
+# Multi-agent collaboration
+agent1.submit_context("Initial analysis")
+shared = nexus.get_shared_contexts()
+agent2.process_with_context(shared)</pre>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2 class="section-title">Use Cases</h2>
+            
+            <div class="features">
+                <div class="feature">
+                    <h3>🔬 Research Collaboration</h3>
+                    <p>Multiple specialized agents working together on complex research problems with shared knowledge base.</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>💼 Persistent Assistants</h3>
+                    <p>AI assistants that remember context across sessions, maintaining continuity in long-term projects.</p>
+                </div>
+                
+                <div class="feature">
+                    <h3>🌐 Distributed AI</h3>
+                    <p>Scale across multiple nodes with Redis-backed synchronization for enterprise deployments.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="links">
+            <a href="https://github.com/MCERQUA/AI-Context-Nexus" class="link">📦 GitHub Repository</a>
+            <a href="https://github.com/MCERQUA/AI-Context-Nexus/blob/main/WHITEPAPER.md" class="link">📄 Whitepaper</a>
+            <a href="https://github.com/MCERQUA/AI-Context-Nexus/blob/main/docs/getting-started.md" class="link">🚀 Getting Started</a>
+            <a href="https://github.com/MCERQUA/AI-Context-Nexus/issues" class="link">💬 Community</a>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="container">
+            <p>© 2025 AI Context Nexus | MIT License | Created by <a href="https://github.com/MCERQUA">Mike Cerqua</a></p>
+            <p style="margin-top: 1rem; opacity: 0.8;">Transforming version control into intelligent memory systems</p>
+        </div>
+    </div>
+</body>
+</html>
